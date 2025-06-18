@@ -30,4 +30,3 @@ A simple Express service that generates presigned download URLs for DigitalOcean
     -d '{"key":"file.txt","bucket":"my-bucket","expiresIn":600}'
   ```
 
-This service enforces a limit of 60 requests per IP per minute.
