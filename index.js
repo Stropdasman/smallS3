@@ -29,6 +29,7 @@ if (
 }
 const s3 = new S3Client({ region: REGION, endpoint: SPACES_ENDPOINT, credentials: { accessKeyId: ACCESS_KEY_ID, secretAccessKey: SECRET_ACCESS_KEY } });
 const app = express();
+app.set('trust proxy', true);
 app.use(express.json());
 // Apply global rate limiting to protect the API
 const limiter = rateLimit({
@@ -97,4 +98,8 @@ app.post('/presign', async (req, res) => {
     res.status(500).json({ error: 'Error generating presigned URL' });
   }
 });
-app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+}
+
+export default app;
