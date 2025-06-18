@@ -1,6 +1,7 @@
 import express from 'express';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 dotenv.config();
 // Read configuration including the expected API key
@@ -29,6 +30,13 @@ if (
 const s3 = new S3Client({ region: REGION, endpoint: SPACES_ENDPOINT, credentials: { accessKeyId: ACCESS_KEY_ID, secretAccessKey: SECRET_ACCESS_KEY } });
 const app = express();
 app.use(express.json());
+// Apply global rate limiting to protect the API
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 60, // 60 requests per IP
+  message: { error: 'Too many requests' },
+});
+app.use(limiter);
 // Parse allowed IPs from environment variable
 const allowedIps = (ALLOWED_IPS || '')
   .split(',')
@@ -52,6 +60,22 @@ app.use((req, res, next) => {
   if (!key || key !== API_KEY) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+  next();
+});
+// Log requests to presign endpoints for observability
+app.use(['/presign', '/presign-upload'], (req, res, next) => {
+  const timestamp = new Date().toISOString();
+  const ip = (req.headers['x-forwarded-for'] || req.connection.remoteAddress || '')
+    .split(',')[0]
+    .trim();
+  const { key, bucket } = req.body || {};
+  res.on('finish', () => {
+    const bucketName = bucket || BUCKET_NAME;
+    const status = res.statusCode >= 200 && res.statusCode < 400 ? 'success' : 'error';
+    console.log(
+      JSON.stringify({ timestamp, ip, key, bucket: bucketName, status })
+    );
+  });
   next();
 });
 // Route to generate a presigned URL

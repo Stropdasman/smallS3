@@ -24,8 +24,10 @@ A simple Express service that generates presigned download URLs for DigitalOcean
 
 4. Make a request:
    ```bash
-   curl -X POST http://localhost:$PORT/presign \
-     -H "Content-Type: application/json" \
-     -H "x-api-key: $API_KEY" \
-     -d '{"key":"file.txt","bucket":"my-bucket","expiresIn":600}'
-   ```
+  curl -X POST http://localhost:$PORT/presign \
+    -H "Content-Type: application/json" \
+    -H "x-api-key: $API_KEY" \
+    -d '{"key":"file.txt","bucket":"my-bucket","expiresIn":600}'
+  ```
+
+This service enforces a limit of 60 requests per IP per minute.
