@@ -4,5 +4,5 @@ COPY package.json ./
 COPY package-lock.json* ./
 RUN npm install --production
 COPY index.js ./
-EXPOSE 2999
+EXPOSE 3000
 CMD ["npm", "start"]
