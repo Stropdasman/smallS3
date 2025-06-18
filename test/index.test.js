@@ -32,3 +32,22 @@ test('POST /presign requires API key and key', async () => {
   assert.equal(res.status, 400);
   server.close();
 });
+
+test('POST /presign returns url and key', async () => {
+  const server = app.listen(0);
+  const url = `http://127.0.0.1:${server.address().port}`;
+
+  const res = await fetch(`${url}/presign`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': 'testkey'
+    },
+    body: JSON.stringify({ key: 'file.txt', bucket: 'b' })
+  });
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.ok(data.url.includes('https://'));
+  assert.equal(data.key, 'file.txt');
+  server.close();
+});
