@@ -23,7 +23,7 @@ A simple Express service that generates presigned download URLs for DigitalOcean
    ```
 
 4. Make a request:
-   ```bash
+```bash
   curl -X POST http://localhost:$PORT/presign \
     -H "Content-Type: application/json" \
     -H "x-api-key: $API_KEY" \
