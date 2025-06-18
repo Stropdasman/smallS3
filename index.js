@@ -30,6 +30,13 @@ const s3 = new S3Client({ region: REGION, endpoint: SPACES_ENDPOINT, credentials
 const app = express();
 app.set('trust proxy', true);
 app.use(express.json());
+
+// Helper to detect client IP
+const getClientIp = (req) => {
+  const forwarded = req.headers['x-forwarded-for'];
+  const ip = forwarded ? forwarded.split(',')[0] : req.connection.remoteAddress;
+  return (ip || '').trim();
+};
 // Parse allowed IPs from environment variable
 const allowedIps = (ALLOWED_IPS || '')
   .split(',')
@@ -38,9 +45,8 @@ const allowedIps = (ALLOWED_IPS || '')
 // Middleware to restrict requests based on IP address
 app.use((req, res, next) => {
   if (allowedIps.length) {
-    const ip = (req.headers['x-forwarded-for'] || req.connection.remoteAddress || '')
-      .split(',')[0]
-      .trim();
+    const ip = getClientIp(req);
+    console.log(`Client IP: ${ip}, allowed: ${allowedIps.join(', ')}`);
     if (!allowedIps.includes(ip)) {
       return res.status(403).json({ error: 'Forbidden: IP not allowed' });
     }
@@ -58,9 +64,7 @@ app.use((req, res, next) => {
 // Log requests to presign endpoints for observability
 app.use(['/presign', '/presign-upload'], (req, res, next) => {
   const timestamp = new Date().toISOString();
-  const ip = (req.headers['x-forwarded-for'] || req.connection.remoteAddress || '')
-    .split(',')[0]
-    .trim();
+  const ip = getClientIp(req);
   const { key, bucket } = req.body || {};
   res.on('finish', () => {
     const bucketName = bucket || BUCKET_NAME;
@@ -70,6 +74,11 @@ app.use(['/presign', '/presign-upload'], (req, res, next) => {
     );
   });
   next();
+});
+
+// Health endpoint to verify IP detection
+app.get('/health', (req, res) => {
+  res.json({ ip: getClientIp(req) });
 });
 // Route to generate a presigned URL
 app.post('/presign', async (req, res) => {
