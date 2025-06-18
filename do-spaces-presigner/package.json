@@ -1,0 +1,14 @@
+{
+  "name": "do-spaces-presigner",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.379.0",
+    "@aws-sdk/s3-request-presigner": "^3.379.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2"
+  }
+}
